@@ -1,4 +1,3 @@
-
 SHOW_ROLE = 'show_role'
 CREATE_ROLE = 'create_role'
 READ_ROLE = 'read_role'
@@ -67,11 +66,23 @@ READ_HALL = 'read_hall'
 UPDATE_HALL = 'update_hall'
 DELETE_HALL = 'delete_hall'
 
+# Room
+CREATE_ROOM = 'create_room'
+READ_ROOM = 'read_room'
+UPDATE_ROOM = 'update_room'
+DELETE_ROOM = 'delete_room'
+
 # Booking
 CREATE_BOOKING = 'create_booking'
 READ_BOOKING = 'read_booking'
 UPDATE_BOOKING = 'update_booking'
 DELETE_BOOKING = 'delete_booking'
+
+# Room Booking
+CREATE_ROOM_BOOKING = 'create_room_booking'
+READ_ROOM_BOOKING = 'read_room_booking'
+UPDATE_ROOM_BOOKING = 'update_room_booking'
+DELETE_ROOM_BOOKING = 'delete_room_booking'
 
 # Activity Log / Dashboard / Reports
 READ_ACTIVITY_LOG = 'read_activity_log'
@@ -90,6 +101,12 @@ READ_HALL_PRICING = 'read_hall_pricing'
 UPDATE_HALL_PRICING = 'update_hall_pricing'
 DELETE_HALL_PRICING = 'delete_hall_pricing'
 
+# Room Pricing
+CREATE_ROOM_PRICING = 'create_room_pricing'
+READ_ROOM_PRICING = 'read_room_pricing'
+UPDATE_ROOM_PRICING = 'update_room_pricing'
+DELETE_ROOM_PRICING = 'delete_room_pricing'
+
 # Booking Service
 CREATE_BOOKING_SERVICE = 'create_booking_service'
 READ_BOOKING_SERVICE = 'read_booking_service'
@@ -101,3 +118,9 @@ CREATE_HALL_AMENITY = 'create_hall_amenity'
 READ_HALL_AMENITY = 'read_hall_amenity'
 UPDATE_HALL_AMENITY = 'update_hall_amenity'
 DELETE_HALL_AMENITY = 'delete_hall_amenity'
+
+# Room Amenity
+CREATE_ROOM_AMENITY = 'create_room_amenity'
+READ_ROOM_AMENITY = 'read_room_amenity'
+UPDATE_ROOM_AMENITY = 'update_room_amenity'
+DELETE_ROOM_AMENITY = 'delete_room_amenity'

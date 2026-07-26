@@ -67,7 +67,7 @@ permissions = [
                module_label='Customer Management', description='User can update customer'),
     Permission(name='Delete Customer', code_name='delete_customer', module_name='Customer',
                module_label='Customer Management', description='User can delete customer'),
- 
+
     # ─────────────────────────────────────────────────────────────
     # HALL
     # ─────────────────────────────────────────────────────────────
@@ -81,7 +81,21 @@ permissions = [
                module_label='Halls & Venues', description='User can update hall'),
     Permission(name='Delete Hall', code_name='delete_hall', module_name='Hall',
                module_label='Halls & Venues', description='User can delete hall'),
- 
+
+    # ─────────────────────────────────────────────────────────────
+    # ROOM
+    # ─────────────────────────────────────────────────────────────
+    Permission(name='Show Room', code_name='show_room', module_name='Room',
+               module_label='Rooms', description='User can see room'),
+    Permission(name='Create Room', code_name='create_room', module_name='Room',
+               module_label='Rooms', description='User can create room'),
+    Permission(name='Read Room', code_name='read_room', module_name='Room',
+               module_label='Rooms', description='User can read room'),
+    Permission(name='Update Room', code_name='update_room', module_name='Room',
+               module_label='Rooms', description='User can update room'),
+    Permission(name='Delete Room', code_name='delete_room', module_name='Room',
+               module_label='Rooms', description='User can delete room'),
+
     # ─────────────────────────────────────────────────────────────
     # BOOKING
     # ─────────────────────────────────────────────────────────────
@@ -95,7 +109,21 @@ permissions = [
                module_label='Event Bookings', description='User can update booking'),
     Permission(name='Delete Booking', code_name='delete_booking', module_name='Booking',
                module_label='Event Bookings', description='User can delete booking'),
- 
+
+    # ─────────────────────────────────────────────────────────────
+    # ROOM BOOKING
+    # ─────────────────────────────────────────────────────────────
+    Permission(name='Show Room Booking', code_name='show_room_booking', module_name='RoomBooking',
+               module_label='Room Bookings', description='User can see room booking'),
+    Permission(name='Create Room Booking', code_name='create_room_booking', module_name='RoomBooking',
+               module_label='Room Bookings', description='User can create room booking'),
+    Permission(name='Read Room Booking', code_name='read_room_booking', module_name='RoomBooking',
+               module_label='Room Bookings', description='User can read room booking'),
+    Permission(name='Update Room Booking', code_name='update_room_booking', module_name='RoomBooking',
+               module_label='Room Bookings', description='User can update room booking'),
+    Permission(name='Delete Room Booking', code_name='delete_room_booking', module_name='RoomBooking',
+               module_label='Room Bookings', description='User can delete room booking'),
+
     # ─────────────────────────────────────────────────────────────
     # ACTIVITY LOG
     # ─────────────────────────────────────────────────────────────
@@ -103,7 +131,7 @@ permissions = [
                module_label='Dashboard', description='User can see activity log'),
     Permission(name='Read Activity Log', code_name='read_activity_log', module_name='ActivityLog',
                module_label='Dashboard', description='User can read activity log'),
- 
+
     # ─────────────────────────────────────────────────────────────
     # DASHBOARD
     # ─────────────────────────────────────────────────────────────
@@ -111,7 +139,7 @@ permissions = [
                module_label='Dashboard', description='User can see dashboard'),
     Permission(name='Read Dashboard', code_name='read_dashboard', module_name='Dashboard',
                module_label='Dashboard', description='User can read dashboard stats'),
- 
+
     # ─────────────────────────────────────────────────────────────
     # REPORTS & ANALYTICS
     # ─────────────────────────────────────────────────────────────
@@ -149,6 +177,20 @@ permissions = [
                module_label='Hall Pricing', description='User can delete hall pricing'),
 
     # ─────────────────────────────────────────────────────────────
+    # ROOM PRICING
+    # ─────────────────────────────────────────────────────────────
+    Permission(name='Show Room Pricing', code_name='show_room_pricing', module_name='RoomPricing',
+               module_label='Room Pricing', description='User can see room pricing'),
+    Permission(name='Create Room Pricing', code_name='create_room_pricing', module_name='RoomPricing',
+               module_label='Room Pricing', description='User can create room pricing'),
+    Permission(name='Read Room Pricing', code_name='read_room_pricing', module_name='RoomPricing',
+               module_label='Room Pricing', description='User can read room pricing'),
+    Permission(name='Update Room Pricing', code_name='update_room_pricing', module_name='RoomPricing',
+               module_label='Room Pricing', description='User can update room pricing'),
+    Permission(name='Delete Room Pricing', code_name='delete_room_pricing', module_name='RoomPricing',
+               module_label='Room Pricing', description='User can delete room pricing'),
+
+    # ─────────────────────────────────────────────────────────────
     # BOOKING SERVICE
     # ─────────────────────────────────────────────────────────────
     Permission(name='Show Booking Service', code_name='show_booking_service', module_name='BookingService',
@@ -175,6 +217,20 @@ permissions = [
                module_label='Hall Amenities', description='User can update hall amenity'),
     Permission(name='Delete Hall Amenity', code_name='delete_hall_amenity', module_name='HallAmenity',
                module_label='Hall Amenities', description='User can delete hall amenity'),
+
+    # ─────────────────────────────────────────────────────────────
+    # ROOM AMENITY
+    # ─────────────────────────────────────────────────────────────
+    Permission(name='Show Room Amenity', code_name='show_room_amenity', module_name='RoomAmenity',
+               module_label='Room Amenities', description='User can see room amenity'),
+    Permission(name='Create Room Amenity', code_name='create_room_amenity', module_name='RoomAmenity',
+               module_label='Room Amenities', description='User can create room amenity'),
+    Permission(name='Read Room Amenity', code_name='read_room_amenity', module_name='RoomAmenity',
+               module_label='Room Amenities', description='User can read room amenity'),
+    Permission(name='Update Room Amenity', code_name='update_room_amenity', module_name='RoomAmenity',
+               module_label='Room Amenities', description='User can update room amenity'),
+    Permission(name='Delete Room Amenity', code_name='delete_room_amenity', module_name='RoomAmenity',
+               module_label='Room Amenities', description='User can delete room amenity'),
 ]
 
 
