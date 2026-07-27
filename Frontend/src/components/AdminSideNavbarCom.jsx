@@ -8,13 +8,54 @@ import { Menu, X } from 'lucide-react';
 // Kept outside the component so it survives remounts caused by route changes.
 let savedSidebarScrollTop = 0;
 
+// const navSections = [
+//   {
+//     label: 'MAIN',
+//     items: [
+//       { icon: '📊', label: 'Dashboard', key: 'dashboard', path: '/admin/dashboard' },
+//       { icon: '🏛️', label: 'Halls & Venues', key: 'halls', path: '/admin/halls' },
+//       { icon: '📅', label: 'Event Bookings', key: 'bookings', path: '/admin/bookings' },
+//     ],
+//   },
+//   {
+//     label: 'FINANCIAL',
+//     items: [
+//       { icon: '💳', label: 'Payments', key: 'payments', path: '/admin/payments' },
+//       { icon: '💰', label: 'Hall Pricing', key: 'pricing', path: '/admin/hall-pricing' },
+//     ],
+//   },
+//   {
+//     label: 'SERVICES',
+//     items: [
+//       { icon: '🎁', label: 'Booking Services', key: 'services', path: '/admin/booking-services' },
+//       { icon: '✨', label: 'Hall Amenities', key: 'amenities', path: '/admin/hall-amenities' },
+//     ],
+//   },
+//   {
+//     label: 'MANAGEMENT',
+//     items: [
+//       { icon: '👥', label: 'Customers', key: 'customers', path: '/admin/customers' },
+//       // { icon: '👤', label: 'System Users', key: 'users', path: '/system_users' },
+//       { icon: '👤', label: 'Employees', key: 'employees', path: '/admin/employees' },
+//       { icon: '🛡️', label: 'Roles', key: 'roles', path: '/admin/roles' },
+//       { icon: '📜', label: 'Activity Log', key: 'activities', path: '/admin/activities' },
+//       { icon: '📈', label: 'Reports & Analytics', key: 'reports', path: '/admin/reports' },
+//     ],
+//   },
+// ];
+
+
+
+
 const navSections = [
   {
     label: 'MAIN',
     items: [
       { icon: '📊', label: 'Dashboard', key: 'dashboard', path: '/admin/dashboard' },
       { icon: '🏛️', label: 'Halls & Venues', key: 'halls', path: '/admin/halls' },
+      { icon: '🚪', label: 'Rooms', key: 'rooms', path: '/admin/rooms' },
       { icon: '📅', label: 'Event Bookings', key: 'bookings', path: '/admin/bookings' },
+      { icon: '🗓️', label: 'Room Bookings', key: 'room-bookings', path: '/admin/roombookings' },
     ],
   },
   {
@@ -22,6 +63,7 @@ const navSections = [
     items: [
       { icon: '💳', label: 'Payments', key: 'payments', path: '/admin/payments' },
       { icon: '💰', label: 'Hall Pricing', key: 'pricing', path: '/admin/hall-pricing' },
+      { icon: '🏷️', label: 'Room Pricing', key: 'room-pricing', path: '/admin/roompricing' },
     ],
   },
   {
@@ -29,6 +71,7 @@ const navSections = [
     items: [
       { icon: '🎁', label: 'Booking Services', key: 'services', path: '/admin/booking-services' },
       { icon: '✨', label: 'Hall Amenities', key: 'amenities', path: '/admin/hall-amenities' },
+      { icon: '🧴', label: 'Room Amenities', key: 'room-amenities', path: '/admin/roomamenities' },
     ],
   },
   {
@@ -43,6 +86,7 @@ const navSections = [
     ],
   },
 ];
+
 
 export default function AdminSideNavbarCom() {
   const router = useRouter();
