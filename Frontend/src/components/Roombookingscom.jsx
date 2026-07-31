@@ -207,9 +207,10 @@ const RoomBookingsCom = () => {
 
   const [rooms, setRooms] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
   const emptyForm = {
-    room: '', customer: '', event_type_en: '', event_type_ar: '',
+    room: '', customer: '', booking: '', event_type_en: '', event_type_ar: '',
     date: '', time_slot: 'morning', status: 'pending', total: '',
   };
   const [form, setForm] = useState(emptyForm);
@@ -218,6 +219,7 @@ const RoomBookingsCom = () => {
     fetchBookings();
     fetchRooms();
     fetchCustomers();
+    fetchHallBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
@@ -270,6 +272,16 @@ const RoomBookingsCom = () => {
     }
   };
 
+  const fetchHallBookings = async () => {
+    try {
+      const res = await AxiosInstance.get('/api/hotel/v1/booking/', { params: { limit: 100 } });
+      const list = res?.data?.data || res?.data?.data?.data || [];
+      setBookings(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.error('Error fetching hall bookings:', error);
+    }
+  };
+
   const filteredRecords = useMemo(() => {
     if (!Array.isArray(records)) return [];
     const q = searchTerm.trim().toLowerCase();
@@ -302,6 +314,7 @@ const RoomBookingsCom = () => {
     setForm({
       room: booking.room || '',
       customer: booking.customer || '',
+      booking: booking.booking || '',
       event_type_en: booking.event_type_en || '',
       event_type_ar: booking.event_type_ar || '',
       date: booking.date || '',
@@ -331,6 +344,7 @@ const RoomBookingsCom = () => {
       const payload = {
         room: form.room,
         customer: form.customer,
+        booking: form.booking || null,
         event_type_en: form.event_type_en,
         event_type_ar: form.event_type_ar,
         date: form.date,
@@ -521,9 +535,9 @@ const RoomBookingsCom = () => {
               <table className="rb-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
                 <thead>
                   <tr style={{ background: ivory, borderBottom: `1px solid ${line}` }}>
-                    {['ID', 'Booking', 'Room', 'Customer', 'Event', 'Date & Time', 'Status', 'Total', ''].map((h, i) => (
+                    {['ID', 'Booking', 'Room', 'Customer', 'Parent Booking', 'Event', 'Date & Time', 'Status', 'Total', ''].map((h, i) => (
                       <th key={i} style={{
-                        textAlign: i === 8 ? 'right' : 'left', padding: '14px 18px',
+                        textAlign: i === 9 ? 'right' : 'left', padding: '14px 18px',
                         fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase',
                         color: '#8A8270', fontWeight: 700,
                       }}>{h}</th>
@@ -556,6 +570,17 @@ const RoomBookingsCom = () => {
                       </td>
                       <td data-label="Customer" style={{ padding: '14px 18px', fontSize: 13.5, color: ink }}>
                         {b.customer_name || b.customer?.name_en || '—'}
+                      </td>
+                      <td data-label="Parent Booking" style={{ padding: '14px 18px' }}>
+                        {b.booking_code_parent ? (
+                          <span style={{
+                            fontSize: 11.5, fontFamily: 'monospace', color: '#8A8270',
+                            background: ivory, border: `1px solid ${lineSoft}`, borderRadius: 6, padding: '3px 8px',
+                            fontWeight: 600,
+                          }}>{b.booking_code_parent}</span>
+                        ) : (
+                          <span style={{ color: '#A39C8A', fontSize: 13 }}>—</span>
+                        )}
                       </td>
                       <td data-label="Event" style={{ padding: '14px 18px', fontSize: 13.5, color: ink }}>
                         {b.event_type_en || '—'}
@@ -728,6 +753,21 @@ const RoomBookingsCom = () => {
                 </select>
               </FormGroup>
             </div>
+
+            <FormGroup label="Parent Hall Booking (Optional)" hint="Link to a main hall booking if this is an add-on">
+              <select
+                style={inputStyle}
+                value={form.booking || ''}
+                onChange={(e) => setForm({ ...form, booking: e.target.value })}
+              >
+                <option value="">No Parent Booking</option>
+                {bookings.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.booking_code} - {b.event_type_en}
+                  </option>
+                ))}
+              </select>
+            </FormGroup>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <FormGroup label="Event Type (English)" required>

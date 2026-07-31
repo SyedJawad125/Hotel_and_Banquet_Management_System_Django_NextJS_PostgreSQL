@@ -174,15 +174,17 @@ const BookingServicesCom = () => {
   const [saving, setSaving] = useState(false);
 
   const [bookings, setBookings] = useState([]);
+  const [roomBookings, setRoomBookings] = useState([]);
 
   const emptyForm = {
-    booking: '', service_name_en: '', service_name_ar: '', cost: '', notes: '',
+    booking: '', room_booking: '', service_name_en: '', service_name_ar: '', cost: '', notes: '',
   };
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
     fetchServices();
     fetchBookings();
+    fetchRoomBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
@@ -225,13 +227,23 @@ const BookingServicesCom = () => {
     }
   };
 
+  const fetchRoomBookings = async () => {
+    try {
+      const res = await AxiosInstance.get('/api/hotel/v1/room/booking/', { params: { limit: 100 } });
+      const list = res?.data?.data || res?.data?.data?.data || [];
+      setRoomBookings(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.error('Error fetching room bookings:', error);
+    }
+  };
+
   const filteredRecords = useMemo(() => {
     if (!Array.isArray(records)) return [];
     const q = searchTerm.trim().toLowerCase();
     if (!q) return records;
     return records.filter((s) => {
       const idMatch = s.id?.toString() === q;
-      const bookingMatch = s.booking?.booking_code?.toLowerCase().includes(q);
+      const bookingMatch = s.booking_code?.toLowerCase().includes(q);
       const nameMatch = `${s.service_name_en || ''} ${s.service_name_ar || ''}`.toLowerCase().includes(q);
       const costMatch = s.cost?.toString().includes(q);
       return idMatch || bookingMatch || nameMatch || costMatch;
@@ -256,6 +268,7 @@ const BookingServicesCom = () => {
     setEditingService(service);
     setForm({
       booking: service.booking || '',
+      room_booking: service.room_booking || '',
       service_name_en: service.service_name_en || '',
       service_name_ar: service.service_name_ar || '',
       cost: service.cost || '',
@@ -271,15 +284,16 @@ const BookingServicesCom = () => {
 
   const saveService = async (e) => {
     e.preventDefault();
-    if (!form.booking || !form.service_name_en.trim() || !form.cost) {
-      toast.error('Booking, service name, and cost are required');
+    if ((!form.booking && !form.room_booking) || !form.service_name_en.trim() || !form.cost) {
+      toast.error('Either a Hall Booking or Room Booking, service name, and cost are required');
       return;
     }
 
     setSaving(true);
     try {
       const payload = {
-        booking: form.booking,
+        booking: form.booking || null,
+        room_booking: form.room_booking || null,
         service_name_en: form.service_name_en,
         service_name_ar: form.service_name_ar,
         cost: form.cost,
@@ -585,19 +599,32 @@ const BookingServicesCom = () => {
       {modalOpen && (
         <Modal
           title={editingService ? 'Update Service' : 'Add Service'}
-          subtitle={editingService ? `Editing service for booking ${editingService.booking?.booking_code}` : 'Add a new service to a booking'}
+          subtitle={editingService ? `Editing service for ${editingService.booking?.booking_code || editingService.room_booking?.booking_code}` : 'Add a new service to a booking'}
           onClose={closeModal}
         >
           <form onSubmit={saveService}>
-            <FormGroup label="Booking" required>
+            <FormGroup label="Hall Booking" required hint="Select either a Hall Booking or Room Booking">
               <select
                 style={inputStyle}
                 value={form.booking}
-                onChange={(e) => setForm({ ...form, booking: e.target.value })}
+                onChange={(e) => setForm({ ...form, booking: e.target.value, room_booking: '' })}
               >
-                <option value="">Select Booking</option>
+                <option value="">Select Hall Booking</option>
                 {bookings.map((b) => (
                   <option key={b.id} value={b.id}>{b.booking_code} - {b.event_type_en}</option>
+                ))}
+              </select>
+            </FormGroup>
+
+            <FormGroup label="Room Booking" required hint="Select either a Hall Booking or Room Booking">
+              <select
+                style={inputStyle}
+                value={form.room_booking}
+                onChange={(e) => setForm({ ...form, room_booking: e.target.value, booking: '' })}
+              >
+                <option value="">Select Room Booking</option>
+                {roomBookings.map((rb) => (
+                  <option key={rb.id} value={rb.id}>{rb.booking_code || `RB${1000 + rb.id}`} - {rb.event_type_en}</option>
                 ))}
               </select>
             </FormGroup>

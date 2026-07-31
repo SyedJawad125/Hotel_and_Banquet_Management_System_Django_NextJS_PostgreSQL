@@ -79,10 +79,10 @@ const responsiveStyles = `
       text-align: left;
       flex-shrink: 0;
     }
-    .rm-table td[data-label='Room'] { align-items: flex-start !important; }
-    .rm-table td[data-label='Room'] .rm-room-col { justify-content: flex-end !important; text-align: right !important; }
-    .rm-table td[data-label=''] { justify-content: flex-end !important; }
-    .rm-table td[data-label='']::before { display: none !important; }
+    .rm-table td[data-label=Room] { align-items: flex-start !important; }
+    .rm-table td[data-label=Room] .rm-room-col { justify-content: flex-end !important; text-align: right !important; }
+    .rm-table td[data-label] { justify-content: flex-end !important; }
+    .rm-table td[data-label]::before { display: none !important; }
 
     /* Pagination bar inside the (now transparent) table wrap */
     .rm-pagination { background: #FFFFFF !important; border: 1px solid rgba(198,164,63,0.12) !important; border-radius: 14px !important; }
@@ -236,13 +236,11 @@ const RoomsCom = () => {
   const [saving, setSaving] = useState(false);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'cards'
 
-  const [halls, setHalls] = useState([]);
-
   // occupied / occupied_dates are computed live on the backend from actual
   // room bookings (Room.is_occupied_today / get_upcoming_bookings), so
   // it's not something a user sets manually here.
   const emptyForm = {
-    hall: '', name_en: '', name_ar: '', code_name: '', capacity: '', capacity_count: '', badge: '',
+    name_en: '', name_ar: '', code_name: '', capacity: '', capacity_count: '', badge: '',
   };
   const [form, setForm] = useState(emptyForm);
   const [imageFile, setImageFile] = useState(null);
@@ -250,7 +248,6 @@ const RoomsCom = () => {
 
   useEffect(() => {
     fetchRooms();
-    fetchHalls();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
@@ -283,15 +280,6 @@ const RoomsCom = () => {
     }
   };
 
-  const fetchHalls = async () => {
-    try {
-      const res = await AxiosInstance.get('/api/hotel/v1/hall/', { params: { limit: 100 } });
-      const list = res?.data?.data || res?.data?.data?.data || [];
-      setHalls(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error('Error fetching halls:', error);
-    }
-  };
 
   const filteredRecords = useMemo(() => {
     if (!Array.isArray(records)) return [];
@@ -302,8 +290,7 @@ const RoomsCom = () => {
       const nameMatch = `${r.name_en || ''} ${r.name_ar || ''}`.toLowerCase().includes(q);
       const codeMatch = r.code_name?.toLowerCase().includes(q);
       const badgeMatch = r.badge?.toLowerCase().includes(q);
-      const hallMatch = (r.hall_name_en || r.hall?.name_en)?.toLowerCase().includes(q);
-      return idMatch || nameMatch || codeMatch || badgeMatch || hallMatch;
+      return idMatch || nameMatch || codeMatch || badgeMatch;
     });
   }, [records, searchTerm]);
 
@@ -325,7 +312,6 @@ const RoomsCom = () => {
   const openEdit = (room) => {
     setEditingRoom(room);
     setForm({
-      hall: room.hall || '',
       name_en: room.name_en || '',
       name_ar: room.name_ar || '',
       code_name: room.code_name || '',
@@ -351,15 +337,14 @@ const RoomsCom = () => {
 
   const saveRoom = async (e) => {
     e.preventDefault();
-    if (!form.hall || !form.name_en.trim() || !form.code_name.trim() || !form.capacity.trim()) {
-      toast.error('Hall, name (English), code name, and capacity are required');
+    if (!form.name_en.trim() || !form.code_name.trim() || !form.capacity.trim()) {
+      toast.error('Name (English), code name, and capacity are required');
       return;
     }
 
     setSaving(true);
     try {
       const formData = new FormData();
-      formData.append('hall', form.hall);
       formData.append('name_en', form.name_en);
       formData.append('name_ar', form.name_ar);
       formData.append('code_name', form.code_name);
@@ -411,7 +396,7 @@ const RoomsCom = () => {
       toast.error('No rooms to export');
       return;
     }
-    const headers = ['ID', 'Hall', 'Name (EN)', 'Name (AR)', 'Code Name', 'Capacity', 'Capacity Count', 'Badge', 'Status', 'Upcoming Dates', 'Booking Count'];
+    const headers = ['ID', 'Name (EN)', 'Name (AR)', 'Code Name', 'Capacity', 'Capacity Count', 'Badge', 'Status', 'Upcoming Dates', 'Booking Count'];
     const escape = (val) => {
       const s = val === null || val === undefined ? '' : String(val);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -421,7 +406,7 @@ const RoomsCom = () => {
         .map((b) => `${b.date} (${b.time_slot_display})`)
         .join(' | ');
     const rows = filteredRecords.map((r) => [
-      r.id, r.hall_name_en || r.hall?.name_en, r.name_en, r.name_ar, r.code_name, r.capacity, r.capacity_count,
+      r.id, r.name_en, r.name_ar, r.code_name, r.capacity, r.capacity_count,
       r.badge, r.occupied ? 'Occupied' : 'Available', formatUpcoming(r), r.booking_count ?? 0,
     ]);
     const csv = [headers, ...rows].map((row) => row.map(escape).join(',')).join('\n');
@@ -522,7 +507,7 @@ const RoomsCom = () => {
           }}>
             <div style={{ position: 'relative' }}>
               <Search size={17} color="#A39C8A" style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)' }} />
-              <input
+              {/* <input
                 type="text"
                 placeholder="Search by name, code, badge, or hall…"
                 value={searchTerm}
@@ -532,7 +517,7 @@ const RoomsCom = () => {
                   border: `1px solid ${line}`, borderRadius: 10, fontSize: 13.5,
                   color: ink, outline: 'none', boxSizing: 'border-box', fontFamily: bodyFont,
                 }}
-              />
+              /> */}
             </div>
           </div>
 
@@ -596,9 +581,9 @@ const RoomsCom = () => {
                 <table className="rm-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 940 }}>
                   <thead>
                     <tr style={{ background: ivory, borderBottom: `1px solid ${line}` }}>
-                      {['ID', 'Room', 'Hall', 'Code', 'Capacity', 'Badge', 'Status', 'Bookings', ''].map((h, i) => (
+                      {['ID', 'Room', 'Code', 'Capacity', 'Badge', 'Status', 'Bookings', ''].map((h, i) => (
                         <th key={i} style={{
-                          textAlign: i === 8 ? 'right' : 'left', padding: '14px 18px',
+                          textAlign: i === 7 ? 'right' : 'left', padding: '14px 18px',
                           fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase',
                           color: '#8A8270', fontWeight: 700,
                         }}>{h}</th>
@@ -640,12 +625,6 @@ const RoomsCom = () => {
                               <div style={{ fontFamily: displayFont, fontSize: 17, fontWeight: 600, color: ink }}>{r.name_en}</div>
                               {r.name_ar && <div style={{ fontSize: 12, color: '#A39C8A' }}>{r.name_ar}</div>}
                             </div>
-                          </div>
-                        </td>
-                        <td data-label="Hall" style={{ padding: '14px 18px', fontSize: 13, color: ink }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Building2 size={13} color="#A39C8A" />
-                            {r.hall_name_en || r.hall?.name_en || '—'}
                           </div>
                         </td>
                         <td data-label="Code" style={{ padding: '14px 18px' }}>
@@ -765,11 +744,6 @@ const RoomsCom = () => {
                   onMouseLeave={(e) => { e.currentTarget.style.borderColor = line; e.currentTarget.style.transform = ''; }}
                 >
                   <StatusPill occupied={r.occupied} />
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#A39C8A', marginTop: 14 }}>
-                    <Building2 size={12} color={gold} />
-                    {r.hall_name_en || r.hall?.name_en || '—'}
-                  </div>
 
                   <div style={{ fontFamily: displayFont, fontSize: 15, color: gold, marginTop: 4, marginBottom: 2 }}>
                     {r.name_en}
@@ -922,24 +896,11 @@ const RoomsCom = () => {
       {modalOpen && (
         <Modal
           title={editingRoom ? 'Update Room' : 'New Room'}
-          subtitle={editingRoom ? `Editing "${editingRoom.name_en}"` : 'Add a room to one of your halls'}
+          subtitle={editingRoom ? `Editing "${editingRoom.name_en}"` : 'Add a room'}
           onClose={closeModal}
           wide
         >
           <form onSubmit={saveRoom}>
-            <FormGroup label="Hall" required>
-              <select
-                style={inputStyle}
-                value={form.hall || ''}
-                onChange={(e) => setForm({ ...form, hall: e.target.value })}
-              >
-                <option value="">Select Hall</option>
-                {halls.map((h) => (
-                  <option key={h.id} value={h.id}>{h.name_en}</option>
-                ))}
-              </select>
-            </FormGroup>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <FormGroup label="Name (English)" required>
                 <TextField

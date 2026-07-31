@@ -203,15 +203,17 @@ const PaymentsCom = () => {
   const [saving, setSaving] = useState(false);
 
   const [bookings, setBookings] = useState([]);
+  const [roomBookings, setRoomBookings] = useState([]);
 
   const emptyForm = {
-    booking: '', amount: '', payment_method: 'cash', payment_date: '', notes: '',
+    booking: '', room_booking: '', amount: '', payment_method: 'cash', payment_date: '', notes: '',
   };
   const [form, setForm] = useState(emptyForm);
 
   useEffect(() => {
     fetchPayments();
     fetchBookings();
+    fetchRoomBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
@@ -265,13 +267,23 @@ const PaymentsCom = () => {
     }
   };
 
+  const fetchRoomBookings = async () => {
+    try {
+      const res = await AxiosInstance.get('/api/hotel/v1/room/booking/', { params: { limit: 100 } });
+      const list = res?.data?.data || res?.data?.data?.data || [];
+      setRoomBookings(Array.isArray(list) ? list : []);
+    } catch (error) {
+      console.error('Error fetching room bookings:', error);
+    }
+  };
+
   const filteredRecords = useMemo(() => {
     if (!Array.isArray(records)) return [];
     const q = searchTerm.trim().toLowerCase();
     if (!q) return records;
     return records.filter((p) => {
       const idMatch = p.id?.toString() === q;
-      const bookingMatch = p.booking?.booking_code?.toLowerCase().includes(q);
+      const bookingMatch = p.booking_code?.toLowerCase().includes(q);
       const methodMatch = p.payment_method?.toLowerCase().includes(q);
       const amountMatch = p.amount?.toString().includes(q);
       return idMatch || bookingMatch || methodMatch || amountMatch;
@@ -295,6 +307,7 @@ const PaymentsCom = () => {
     setEditingPayment(payment);
     setForm({
       booking: payment.booking || '',
+      room_booking: payment.room_booking || '',
       amount: payment.amount || '',
       payment_method: payment.payment_method || 'cash',
       payment_date: payment.payment_date || '',
@@ -310,15 +323,16 @@ const PaymentsCom = () => {
 
   const savePayment = async (e) => {
     e.preventDefault();
-    if (!form.booking || !form.amount || !form.payment_date) {
-      toast.error('Booking, amount, and payment date are required');
+    if ((!form.booking && !form.room_booking) || !form.amount || !form.payment_date) {
+      toast.error('Either a Hall Booking or Room Booking, amount, and payment date are required');
       return;
     }
 
     setSaving(true);
     try {
       const payload = {
-        booking: form.booking,
+        booking: form.booking || null,
+        room_booking: form.room_booking || null,
         amount: form.amount,
         payment_method: form.payment_method,
         payment_date: form.payment_date,
@@ -631,19 +645,32 @@ const PaymentsCom = () => {
       {modalOpen && (
         <Modal
           title={editingPayment ? 'Update Payment' : 'Record Payment'}
-          subtitle={editingPayment ? `Editing payment for booking ${editingPayment.booking?.booking_code}` : 'Add a new payment record'}
+          subtitle={editingPayment ? `Editing payment for ${editingPayment.booking?.booking_code || editingPayment.room_booking?.booking_code}` : 'Add a new payment record'}
           onClose={closeModal}
         >
           <form onSubmit={savePayment}>
-            <FormGroup label="Booking" required>
+            <FormGroup label="Hall Booking" required hint="Select either a Hall Booking or Room Booking">
               <select
                 style={inputStyle}
                 value={form.booking}
-                onChange={(e) => setForm({ ...form, booking: e.target.value })}
+                onChange={(e) => setForm({ ...form, booking: e.target.value, room_booking: '' })}
               >
-                <option value="">Select Booking</option>
+                <option value="">Select Hall Booking</option>
                 {bookings.map((b) => (
                   <option key={b.id} value={b.id}>{b.booking_code} - {b.event_type_en}</option>
+                ))}
+              </select>
+            </FormGroup>
+
+            <FormGroup label="Room Booking" required hint="Select either a Hall Booking or Room Booking">
+              <select
+                style={inputStyle}
+                value={form.room_booking}
+                onChange={(e) => setForm({ ...form, room_booking: e.target.value, booking: '' })}
+              >
+                <option value="">Select Room Booking</option>
+                {roomBookings.map((rb) => (
+                  <option key={rb.id} value={rb.id}>{rb.booking_code || `RB${1000 + rb.id}`} - {rb.event_type_en}</option>
                 ))}
               </select>
             </FormGroup>

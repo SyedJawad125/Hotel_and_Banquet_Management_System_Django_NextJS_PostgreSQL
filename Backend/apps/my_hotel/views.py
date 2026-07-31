@@ -584,9 +584,6 @@ class HallView(BaseView):
                 if instance:
                     if instance.bookings.filter(deleted=False).exclude(status=CANCELLED).exists():
                         return Response(create_response(HALL_HAS_ACTIVE_BOOKINGS), status=status.HTTP_400_BAD_REQUEST)
-                    # block delete if any room under this hall has active bookings
-                    if Room.objects.filter(hall=instance, deleted=False).exists():
-                        return Response(create_response(HALL_HAS_ROOMS), status=status.HTTP_400_BAD_REQUEST)
                     instance.deleted = True
                     instance.updated_by = request.user
                     instance.save()

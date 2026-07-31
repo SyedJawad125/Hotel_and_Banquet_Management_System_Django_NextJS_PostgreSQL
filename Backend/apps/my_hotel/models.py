@@ -417,7 +417,7 @@ class Room(TimeUserStamps):
     A Room belongs to a Hall (e.g. a meeting room or prep room inside
     a larger venue) and can be booked independently of the hall itself.
     """
-    hall = models.ForeignKey('Hall', on_delete=models.CASCADE, related_name='rooms')
+    # hall = models.ForeignKey('Hall', on_delete=models.CASCADE, related_name='rooms')
 
     name_en = models.CharField(max_length=150, validators=[val_name])
     name_ar = models.CharField(max_length=150, null=True, blank=True)

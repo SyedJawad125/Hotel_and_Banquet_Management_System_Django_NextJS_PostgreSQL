@@ -373,11 +373,10 @@ def room_post_save(sender, instance, created, update_fields, **kwargs):
 
     user = _user(instance)
     name = instance.name_en
-    hall_name = instance.hall.name_en if instance.hall else ''
 
     if getattr(instance, 'deleted', False):
-        _log('🗑️', f"Room '{name}' ({instance.code_name}) at '{hall_name}' was deleted.", user)
+        _log('🗑️', f"Room '{name}' ({instance.code_name}) was deleted.", user)
     elif created:
-        _log('🚪', f"New room '{name}' ({instance.code_name}) was added under '{hall_name}'.", user)
+        _log('🚪', f"New room '{name}' ({instance.code_name}) was added.", user)
     else:
         _log('✏️', f"Room '{name}' ({instance.code_name}) details were updated.", user)

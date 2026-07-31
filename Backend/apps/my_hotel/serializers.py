@@ -606,7 +606,7 @@ class RoomSerializer(RoomOccupancyMixin, serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['created_by'] = instance.created_by.full_name if instance.created_by else None
         data['updated_by'] = instance.updated_by.full_name if instance.updated_by else None
-        data['hall_name_en'] = instance.hall.name_en if instance.hall else None
+        # data['hall_name_en'] = instance.hall.name_en if instance.hall else None
         request = self.context.get('request')
         if instance.image and request:
             data['image'] = request.build_absolute_uri(instance.image.url)
@@ -616,11 +616,11 @@ class RoomSerializer(RoomOccupancyMixin, serializers.ModelSerializer):
 class RoomListingSerializer(RoomOccupancyMixin, serializers.ModelSerializer):
     occupied = serializers.SerializerMethodField()
     upcoming_occupied_dates = serializers.SerializerMethodField()
-    hall_name_en = serializers.CharField(source='hall.name_en', read_only=True)
+    # hall_name_en = serializers.CharField(source='hall.name_en', read_only=True)
 
     class Meta:
         model = Room
-        fields = ['id', 'hall', 'hall_name_en', 'name_en', 'name_ar', 'code_name', 'capacity', 'capacity_count',
+        fields = ['id', 'name_en', 'name_ar', 'code_name', 'capacity', 'capacity_count',
                   'badge', 'image', 'occupied', 'upcoming_occupied_dates', 'booking_count']
 
     def to_representation(self, instance):

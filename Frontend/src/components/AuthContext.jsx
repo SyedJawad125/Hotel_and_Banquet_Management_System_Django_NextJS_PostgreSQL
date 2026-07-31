@@ -232,21 +232,22 @@ export const AuthProvider = ({ children }) => {
 
   // Helper function to check if user has a specific permission
   const hasPermission = (permission) => {
-    const result = permissions.includes(permission);
+    // permissions is an object: { "create_room": true, "update_room": true, ... }
+    const result = permissions && permissions[permission] === true;
     console.log(`Checking permission "${permission}":`, result);
     return result;
   };
 
   // Helper function to check multiple permissions (user needs at least one)
   const hasAnyPermission = (permissionList) => {
-    const result = permissionList.some(permission => permissions.includes(permission));
+    const result = permissionList.some(permission => permissions && permissions[permission] === true);
     console.log(`Checking any permission from [${permissionList.join(', ')}]:`, result);
     return result;
   };
 
   // Helper function to check if user has all permissions
   const hasAllPermissions = (permissionList) => {
-    const result = permissionList.every(permission => permissions.includes(permission));
+    const result = permissionList.every(permission => permissions && permissions[permission] === true);
     console.log(`Checking all permissions from [${permissionList.join(', ')}]:`, result);
     return result;
   };
