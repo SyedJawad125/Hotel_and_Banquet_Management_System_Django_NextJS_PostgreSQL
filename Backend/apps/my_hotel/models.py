@@ -414,14 +414,10 @@ def get_room_image_path(self, filename):
 class Room(TimeUserStamps):
     """
     Rooms screen: room cards (name EN/AR, capacity, badge, status).
-    A Room belongs to a Hall (e.g. a meeting room or prep room inside
-    a larger venue) and can be booked independently of the hall itself.
     """
-    # hall = models.ForeignKey('Hall', on_delete=models.CASCADE, related_name='rooms')
-
     name_en = models.CharField(max_length=150, validators=[val_name])
     name_ar = models.CharField(max_length=150, null=True, blank=True)
-    code_name = models.CharField(max_length=50, unique=True, validators=[val_code_name])
+    code_name = models.CharField(max_length=50, unique=True, blank=True, editable=False)
     capacity = models.CharField(max_length=50, help_text='Display string, e.g. "7 Guests"')
     capacity_count = models.PositiveIntegerField(null=True, blank=True)
     badge = models.CharField(max_length=100, null=True, blank=True)
@@ -436,14 +432,21 @@ class Room(TimeUserStamps):
 
     def save(self, *args, **kwargs):
         self.name_en = self.name_en.title()
-        return super().save(*args, **kwargs)
+        is_new = self._state.adding
+        super().save(*args, **kwargs)
+
+        # Auto-generate code_name once we have a pk. Mirrors Booking's
+        # booking_code pattern — a second, targeted save so we don't need
+        # a pre-save pk lookup or a race-prone counter table.
+        if is_new and not self.code_name:
+            self.code_name = f"RM-{self.pk:04d}"
+            super().save(update_fields=['code_name'])
 
     def recalculate_booking_count(self):
         self.booking_count = self.bookings.count()
         self.save(update_fields=['booking_count'])
 
     def get_upcoming_bookings(self, limit=2):
-        """Non-cancelled room bookings for today or later, soonest first."""
         today = timezone.localdate()
         return (
             self.bookings
@@ -461,7 +464,6 @@ class Room(TimeUserStamps):
             .exclude(status=CANCELLED)
             .exists()
         )
-
 
 # ─────────────────────────────────────────────────────────────────────
 # EVENT BOOKINGS (HALL)

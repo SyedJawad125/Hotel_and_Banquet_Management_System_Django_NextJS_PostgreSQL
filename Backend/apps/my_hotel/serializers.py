@@ -585,28 +585,23 @@ class RoomSerializer(RoomOccupancyMixin, serializers.ModelSerializer):
     class Meta:
         model = Room
         fields = '__all__'
+        read_only_fields = ['code_name']
 
     def validate(self, attrs):
         name_en = attrs.get('name_en', None)
-        code_name = attrs.get('code_name', None)
 
         if self.instance:
             if name_en and Room.objects.filter(name_en__iexact=name_en, deleted=False).exclude(id=self.instance.id).exists():
                 raise serializers.ValidationError('Room with this name already exists')
-            if code_name and Room.objects.filter(code_name__iexact=code_name, deleted=False).exclude(id=self.instance.id).exists():
-                raise serializers.ValidationError('Room with this code name already exists')
         else:
             if Room.objects.filter(name_en__iexact=name_en, deleted=False).exists():
                 raise serializers.ValidationError('Room with this name already exists')
-            if Room.objects.filter(code_name__iexact=code_name, deleted=False).exists():
-                raise serializers.ValidationError('Room with this code name already exists')
         return attrs
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data['created_by'] = instance.created_by.full_name if instance.created_by else None
         data['updated_by'] = instance.updated_by.full_name if instance.updated_by else None
-        # data['hall_name_en'] = instance.hall.name_en if instance.hall else None
         request = self.context.get('request')
         if instance.image and request:
             data['image'] = request.build_absolute_uri(instance.image.url)
