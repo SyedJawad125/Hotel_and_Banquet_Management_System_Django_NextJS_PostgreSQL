@@ -89,13 +89,13 @@ const responsiveStyles = `
 
 const StatusPill = ({ status }) => {
   const config = {
-    confirmed: { bg: '#EAF4EA', color: '#3D7A45', border: 'rgba(61,122,69,0.18)', icon: CheckCircle },
-    pending: { bg: '#FEF7E6', color: '#B8860B', border: 'rgba(184,134,11,0.18)', icon: PendingIcon },
-    cancelled: { bg: '#FBEAEA', color: '#B23B3B', border: 'rgba(178,59,59,0.18)', icon: XCircle },
-    checked_in: { bg: '#E3F2FD', color: '#1976D2', border: 'rgba(25,118,210,0.18)', icon: CheckCircle },
-    checked_out: { bg: '#E8EAF6', color: '#3F51B5', border: 'rgba(63,81,181,0.18)', icon: CheckCircle },
+    CONFIRMED: { bg: '#EAF4EA', color: '#3D7A45', border: 'rgba(61,122,69,0.18)', icon: CheckCircle },
+    PENDING: { bg: '#FEF7E6', color: '#B8860B', border: 'rgba(184,134,11,0.18)', icon: PendingIcon },
+    CANCELLED: { bg: '#FBEAEA', color: '#B23B3B', border: 'rgba(178,59,59,0.18)', icon: XCircle },
+    CHECKED_IN: { bg: '#E3F2FD', color: '#1976D2', border: 'rgba(25,118,210,0.18)', icon: CheckCircle },
+    CHECKED_OUT: { bg: '#E8EAF6', color: '#3F51B5', border: 'rgba(63,81,181,0.18)', icon: CheckCircle },
   };
-  const c = config[status?.toLowerCase()] || config.pending;
+  const c = config[status] || config.PENDING;
   const Icon = c.icon;
 
   return (
@@ -209,11 +209,10 @@ const RoomBookingsCom = () => {
 
   const [rooms, setRooms] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [bookings, setBookings] = useState([]);
 
   const emptyForm = {
-    room: '', customer: '', booking: '', event_type_en: '', event_type_ar: '',
-    check_in_date: '', check_out_date: '', status: 'pending', total: '',
+    room: '', customer: '', event_type_en: '', event_type_ar: '',
+    check_in_date: '', check_out_date: '', status: 'PENDING', total: '',
   };
   const [form, setForm] = useState(emptyForm);
 
@@ -221,7 +220,6 @@ const RoomBookingsCom = () => {
     fetchBookings();
     fetchRooms();
     fetchCustomers();
-    fetchHallBookings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
@@ -274,16 +272,6 @@ const RoomBookingsCom = () => {
     }
   };
 
-  const fetchHallBookings = async () => {
-    try {
-      const res = await AxiosInstance.get('/api/hotel/v1/booking/', { params: { limit: 100 } });
-      const list = res?.data?.data || res?.data?.data?.data || [];
-      setBookings(Array.isArray(list) ? list : []);
-    } catch (error) {
-      console.error('Error fetching hall bookings:', error);
-    }
-  };
-
   const filteredRecords = useMemo(() => {
     if (!Array.isArray(records)) return [];
     const q = searchTerm.trim().toLowerCase();
@@ -316,12 +304,11 @@ const RoomBookingsCom = () => {
     setForm({
       room: booking.room || '',
       customer: booking.customer || '',
-      booking: booking.booking || '',
       event_type_en: booking.event_type_en || '',
       event_type_ar: booking.event_type_ar || '',
       check_in_date: booking.check_in_date || '',
       check_out_date: booking.check_out_date || '',
-      status: booking.status || 'pending',
+      status: booking.status || 'PENDING',
       total: booking.total || '',
     });
     setModalOpen(true);
@@ -346,7 +333,6 @@ const RoomBookingsCom = () => {
       const payload = {
         room: form.room,
         customer: form.customer,
-        booking: form.booking || null,
         event_type_en: form.event_type_en,
         event_type_ar: form.event_type_ar,
         check_in_date: form.check_in_date,
@@ -537,7 +523,7 @@ const RoomBookingsCom = () => {
               <table className="rb-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
                 <thead>
                   <tr style={{ background: ivory, borderBottom: `1px solid ${line}` }}>
-                    {['ID', 'Booking', 'Room', 'Customer', 'Parent Booking', 'Event', 'Check-In', 'Check-Out', 'Status', 'Total', ''].map((h, i) => (
+                    {['ID', 'Booking', 'Room', 'Customer', 'Event', 'Check-In', 'Check-Out', 'Status', 'Total', ''].map((h, i) => (
                       <th key={i} style={{
                         textAlign: i === 10 ? 'right' : 'left', padding: '14px 18px',
                         fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -572,17 +558,6 @@ const RoomBookingsCom = () => {
                       </td>
                       <td data-label="Customer" style={{ padding: '14px 18px', fontSize: 13.5, color: ink }}>
                         {b.customer_name || b.customer?.name_en || '—'}
-                      </td>
-                      <td data-label="Parent Booking" style={{ padding: '14px 18px' }}>
-                        {b.booking_code_parent ? (
-                          <span style={{
-                            fontSize: 11.5, fontFamily: 'monospace', color: '#8A8270',
-                            background: ivory, border: `1px solid ${lineSoft}`, borderRadius: 6, padding: '3px 8px',
-                            fontWeight: 600,
-                          }}>{b.booking_code_parent}</span>
-                        ) : (
-                          <span style={{ color: '#A39C8A', fontSize: 13 }}>—</span>
-                        )}
                       </td>
                       <td data-label="Event" style={{ padding: '14px 18px', fontSize: 13.5, color: ink }}>
                         {b.event_type_en || '—'}
@@ -756,21 +731,6 @@ const RoomBookingsCom = () => {
               </FormGroup>
             </div>
 
-            <FormGroup label="Parent Hall Booking (Optional)" hint="Link to a main hall booking if this is an add-on">
-              <select
-                style={inputStyle}
-                value={form.booking || ''}
-                onChange={(e) => setForm({ ...form, booking: e.target.value })}
-              >
-                <option value="">No Parent Booking</option>
-                {bookings.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.booking_code} - {b.event_type_en}
-                  </option>
-                ))}
-              </select>
-            </FormGroup>
-
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               <FormGroup label="Event Type (English)" required>
                 <TextField
@@ -810,14 +770,14 @@ const RoomBookingsCom = () => {
               <FormGroup label="Status" required>
                 <select
                   style={inputStyle}
-                  value={form.status || 'pending'}
+                  value={form.status || 'PENDING'}
                   onChange={(e) => setForm({ ...form, status: e.target.value })}
                 >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="checked_in">Checked In</option>
-                  <option value="checked_out">Checked Out</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="CONFIRMED">Confirmed</option>
+                  <option value="CHECKED_IN">Checked In</option>
+                  <option value="CHECKED_OUT">Checked Out</option>
+                  <option value="CANCELLED">Cancelled</option>
                 </select>
               </FormGroup>
               <FormGroup label="Total (SAR)" required>
