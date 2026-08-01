@@ -92,6 +92,8 @@ const StatusPill = ({ status }) => {
     confirmed: { bg: '#EAF4EA', color: '#3D7A45', border: 'rgba(61,122,69,0.18)', icon: CheckCircle },
     pending: { bg: '#FEF7E6', color: '#B8860B', border: 'rgba(184,134,11,0.18)', icon: PendingIcon },
     cancelled: { bg: '#FBEAEA', color: '#B23B3B', border: 'rgba(178,59,59,0.18)', icon: XCircle },
+    checked_in: { bg: '#E3F2FD', color: '#1976D2', border: 'rgba(25,118,210,0.18)', icon: CheckCircle },
+    checked_out: { bg: '#E8EAF6', color: '#3F51B5', border: 'rgba(63,81,181,0.18)', icon: CheckCircle },
   };
   const c = config[status?.toLowerCase()] || config.pending;
   const Icon = c.icon;
@@ -106,7 +108,7 @@ const StatusPill = ({ status }) => {
       }}
     >
       <Icon size={12} />
-      {status || 'Pending'}
+      {status?.replace('_', ' ') || 'Pending'}
     </span>
   );
 };
@@ -211,7 +213,7 @@ const RoomBookingsCom = () => {
 
   const emptyForm = {
     room: '', customer: '', booking: '', event_type_en: '', event_type_ar: '',
-    date: '', time_slot: 'morning', status: 'pending', total: '',
+    check_in_date: '', check_out_date: '', status: 'pending', total: '',
   };
   const [form, setForm] = useState(emptyForm);
 
@@ -317,8 +319,8 @@ const RoomBookingsCom = () => {
       booking: booking.booking || '',
       event_type_en: booking.event_type_en || '',
       event_type_ar: booking.event_type_ar || '',
-      date: booking.date || '',
-      time_slot: booking.time_slot || 'morning',
+      check_in_date: booking.check_in_date || '',
+      check_out_date: booking.check_out_date || '',
       status: booking.status || 'pending',
       total: booking.total || '',
     });
@@ -334,8 +336,8 @@ const RoomBookingsCom = () => {
 
   const saveBooking = async (e) => {
     e.preventDefault();
-    if (!form.room || !form.customer || !form.event_type_en.trim() || !form.date || !form.total) {
-      toast.error('Room, customer, event type, date, and total are required');
+    if (!form.room || !form.customer || !form.event_type_en.trim() || !form.check_in_date || !form.check_out_date || !form.total) {
+      toast.error('Room, customer, event type, check-in date, check-out date, and total are required');
       return;
     }
 
@@ -347,8 +349,8 @@ const RoomBookingsCom = () => {
         booking: form.booking || null,
         event_type_en: form.event_type_en,
         event_type_ar: form.event_type_ar,
-        date: form.date,
-        time_slot: form.time_slot,
+        check_in_date: form.check_in_date,
+        check_out_date: form.check_out_date,
         status: form.status,
         total: form.total,
       };
@@ -394,14 +396,14 @@ const RoomBookingsCom = () => {
       toast.error('No room bookings to export');
       return;
     }
-    const headers = ['ID', 'Booking Code', 'Room', 'Customer', 'Event', 'Date', 'Time Slot', 'Status', 'Total'];
+    const headers = ['ID', 'Booking Code', 'Room', 'Customer', 'Event', 'Check-In', 'Check-Out', 'Status', 'Total'];
     const escape = (val) => {
       const s = val === null || val === undefined ? '' : String(val);
       return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
     const rows = filteredRecords.map((b) => [
       b.id, b.booking_code, b.room_name_en || b.room?.name_en, b.customer_name || b.customer?.name_en,
-      b.event_type_en, b.date, b.time_slot, b.status, b.total,
+      b.event_type_en, b.check_in_date, b.check_out_date, b.status, b.total,
     ]);
     const csv = [headers, ...rows].map((row) => row.map(escape).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -535,9 +537,9 @@ const RoomBookingsCom = () => {
               <table className="rb-table" style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
                 <thead>
                   <tr style={{ background: ivory, borderBottom: `1px solid ${line}` }}>
-                    {['ID', 'Booking', 'Room', 'Customer', 'Parent Booking', 'Event', 'Date & Time', 'Status', 'Total', ''].map((h, i) => (
+                    {['ID', 'Booking', 'Room', 'Customer', 'Parent Booking', 'Event', 'Check-In', 'Check-Out', 'Status', 'Total', ''].map((h, i) => (
                       <th key={i} style={{
-                        textAlign: i === 9 ? 'right' : 'left', padding: '14px 18px',
+                        textAlign: i === 10 ? 'right' : 'left', padding: '14px 18px',
                         fontSize: 10.5, letterSpacing: '0.08em', textTransform: 'uppercase',
                         color: '#8A8270', fontWeight: 700,
                       }}>{h}</th>
@@ -585,16 +587,16 @@ const RoomBookingsCom = () => {
                       <td data-label="Event" style={{ padding: '14px 18px', fontSize: 13.5, color: ink }}>
                         {b.event_type_en || '—'}
                       </td>
-                      <td data-label="Date & Time" style={{ padding: '14px 18px', fontSize: 12.5, color: ink }}>
-                        <div className="rb-datetime-col" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Calendar size={13} color="#A39C8A" />
-                            {b.date || '—'}
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <Clock size={13} color="#A39C8A" />
-                            <span style={{ textTransform: 'capitalize' }}>{b.time_slot || 'morning'}</span>
-                          </div>
+                      <td data-label="Check-In" style={{ padding: '14px 18px', fontSize: 12.5, color: ink }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Calendar size={13} color="#A39C8A" />
+                          {b.check_in_date || '—'}
+                        </div>
+                      </td>
+                      <td data-label="Check-Out" style={{ padding: '14px 18px', fontSize: 12.5, color: ink }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Calendar size={13} color="#A39C8A" />
+                          {b.check_out_date || '—'}
                         </div>
                       </td>
                       <td data-label="Status" style={{ padding: '14px 18px' }}>
@@ -788,23 +790,19 @@ const RoomBookingsCom = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <FormGroup label="Date" required>
+              <FormGroup label="Check-In Date" required>
                 <TextField
                   type="date"
-                  value={form.date || ''}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  value={form.check_in_date || ''}
+                  onChange={(e) => setForm({ ...form, check_in_date: e.target.value })}
                 />
               </FormGroup>
-              <FormGroup label="Time Slot" required>
-                <select
-                  style={inputStyle}
-                  value={form.time_slot || 'morning'}
-                  onChange={(e) => setForm({ ...form, time_slot: e.target.value })}
-                >
-                  <option value="morning">Morning Shift</option>
-                  <option value="afternoon">Afternoon Shift</option>
-                  <option value="night">Night Shift</option>
-                </select>
+              <FormGroup label="Check-Out Date" required>
+                <TextField
+                  type="date"
+                  value={form.check_out_date || ''}
+                  onChange={(e) => setForm({ ...form, check_out_date: e.target.value })}
+                />
               </FormGroup>
             </div>
 
@@ -817,6 +815,8 @@ const RoomBookingsCom = () => {
                 >
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
+                  <option value="checked_in">Checked In</option>
+                  <option value="checked_out">Checked Out</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
               </FormGroup>
