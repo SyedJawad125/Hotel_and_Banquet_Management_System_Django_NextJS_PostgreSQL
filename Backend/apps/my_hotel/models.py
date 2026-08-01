@@ -422,7 +422,7 @@ class Room(TimeUserStamps):
     name_en = models.CharField(max_length=150, validators=[val_name])
     name_ar = models.CharField(max_length=150, null=True, blank=True)
     code_name = models.CharField(max_length=50, unique=True, validators=[val_code_name])
-    capacity = models.CharField(max_length=50, help_text='Display string, e.g. "50 Guests"')
+    capacity = models.CharField(max_length=50, help_text='Display string, e.g. "7 Guests"')
     capacity_count = models.PositiveIntegerField(null=True, blank=True)
     badge = models.CharField(max_length=100, null=True, blank=True)
     image = models.ImageField(max_length=255, upload_to=get_room_image_path, null=True, blank=True)

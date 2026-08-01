@@ -937,20 +937,21 @@ const RoomsCom = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <FormGroup label="Capacity" required hint='Display text, e.g. "50 Guests"'>
+              <FormGroup label="Capacity" required hint='Display text, e.g. "7 Guests"'>
                 <TextField
                   value={form.capacity}
                   onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                  placeholder="50 Guests"
+                  placeholder="7 Guests"
                 />
               </FormGroup>
-              <FormGroup label="Capacity (count)" hint="Numeric value, optional">
+              <FormGroup label="Capacity (count)" hint="Numeric value, max 7 guests">
                 <TextField
                   type="number"
                   min="0"
+                  max="7"
                   value={form.capacity_count}
                   onChange={(e) => setForm({ ...form, capacity_count: e.target.value })}
-                  placeholder="50"
+                  placeholder="7"
                 />
               </FormGroup>
             </div>
