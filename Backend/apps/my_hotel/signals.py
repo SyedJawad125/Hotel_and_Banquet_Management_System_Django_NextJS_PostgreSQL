@@ -342,6 +342,7 @@ def booking_post_save(sender, instance, created, update_fields, **kwargs):
 # Fields written by RoomBooking.save() auto-code logic — skip these.
 _ROOM_BOOKING_INTERNAL_FIELDS = [
     {'booking_code'},                    # auto-generated code on first save
+    {'nights', 'price_per_night', 'total'},  # auto-calculated fields
 ]
 
 @receiver(post_save, sender=RoomBooking)
@@ -354,8 +355,8 @@ def room_booking_post_save(sender, instance, created, update_fields, **kwargs):
     code  = instance.booking_code or f"#{instance.pk}"
     cname = instance.customer.name_en
     rname = instance.room.name_en
-    date  = instance.date
-    slot  = instance.get_time_slot_display()   # e.g. "Night Shift"
+    check_in = instance.check_in_date
+    check_out = instance.check_out_date
 
     # ── Soft-delete (deleted=True saved by RoomBookingView.delete) ─
     if getattr(instance, 'deleted', False):
@@ -368,23 +369,31 @@ def room_booking_post_save(sender, instance, created, update_fields, **kwargs):
     if created:
         _log('📅',
              f"New room booking {code} created — {cname} @ {rname} "
-             f"on {date} ({slot}).",
+             f"from {check_in} to {check_out}.",
              user)
         return
 
     # ── Status-specific updates ───────────────────────────────────
-    if instance.status == CANCELLED:
+    if instance.status == RoomBooking.STATUS_CANCELLED:
         _log('❌',
              f"Room booking {code} for {cname} at {rname} was cancelled.",
              user)
-    elif instance.status == CONFIRMED:
+    elif instance.status == RoomBooking.STATUS_CONFIRMED:
         _log('✅',
              f"Room booking {code} for {cname} at {rname} was confirmed.",
+             user)
+    elif instance.status == RoomBooking.STATUS_CHECKED_IN:
+        _log('🔑',
+             f"Room booking {code} for {cname} at {rname} was checked in.",
+             user)
+    elif instance.status == RoomBooking.STATUS_CHECKED_OUT:
+        _log('🚪',
+             f"Room booking {code} for {cname} at {rname} was checked out.",
              user)
     else:
         _log('✏️',
              f"Room booking {code} for {cname} at {rname} was updated "
-             f"(status: {instance.status}).",
+             f"(status: {instance.get_status_display()}).",
              user)
 
 

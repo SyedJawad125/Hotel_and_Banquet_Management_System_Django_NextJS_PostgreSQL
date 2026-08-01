@@ -413,18 +413,53 @@ def get_room_image_path(self, filename):
 
 class Room(TimeUserStamps):
     """
-    Rooms screen: room cards (name EN/AR, capacity, badge, status).
+    Rooms screen: room cards (Single, Double, Deluxe, Suite, etc.)
     """
+
     name_en = models.CharField(max_length=150, validators=[val_name])
     name_ar = models.CharField(max_length=150, null=True, blank=True)
-    code_name = models.CharField(max_length=50, unique=True, blank=True, editable=False)
-    capacity = models.CharField(max_length=50, help_text='Display string, e.g. "7 Guests"')
-    capacity_count = models.PositiveIntegerField(null=True, blank=True)
-    badge = models.CharField(max_length=100, null=True, blank=True)
-    image = models.ImageField(max_length=255, upload_to=get_room_image_path, null=True, blank=True)
+
+    code_name = models.CharField(
+        max_length=50,
+        unique=True,
+        blank=True,
+        editable=False
+    )
+
+    capacity = models.CharField(
+        max_length=50,
+        help_text='Display string, e.g. "2 Guests"'
+    )
+
+    capacity_count = models.PositiveIntegerField(
+        null=True,
+        blank=True
+    )
+
+    # Default room price
+    price_per_night = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Default room price per night"
+    )
+
+    badge = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    image = models.ImageField(
+        max_length=255,
+        upload_to=get_room_image_path,
+        null=True,
+        blank=True
+    )
 
     occupied = models.BooleanField(default=False)
     occupied_dates = models.CharField(max_length=255, null=True, blank=True)
+
     booking_count = models.PositiveIntegerField(default=0)
 
     def __str__(self):
@@ -432,38 +467,42 @@ class Room(TimeUserStamps):
 
     def save(self, *args, **kwargs):
         self.name_en = self.name_en.title()
+
         is_new = self._state.adding
         super().save(*args, **kwargs)
 
-        # Auto-generate code_name once we have a pk. Mirrors Booking's
-        # booking_code pattern — a second, targeted save so we don't need
-        # a pre-save pk lookup or a race-prone counter table.
         if is_new and not self.code_name:
             self.code_name = f"RM-{self.pk:04d}"
-            super().save(update_fields=['code_name'])
+            super().save(update_fields=["code_name"])
 
     def recalculate_booking_count(self):
         self.booking_count = self.bookings.count()
-        self.save(update_fields=['booking_count'])
+        self.save(update_fields=["booking_count"])
 
     def get_upcoming_bookings(self, limit=2):
         today = timezone.localdate()
+
         return (
             self.bookings
-            .filter(deleted=False, date__gte=today)
-            .exclude(status=CANCELLED)
-            .order_by('date', 'time_slot')[:limit]
+            .filter(
+                deleted=False,
+                check_out_date__gte=today
+            )
+            .exclude(status=RoomBooking.STATUS_CANCELLED)
+            .order_by("check_in_date")[:limit]
         )
 
     @property
     def is_occupied_today(self):
         today = timezone.localdate()
-        return (
-            self.bookings
-            .filter(deleted=False, date=today)
-            .exclude(status=CANCELLED)
-            .exists()
-        )
+
+        return self.bookings.filter(
+            deleted=False,
+            check_in_date__lte=today,
+            check_out_date__gt=today
+        ).exclude(
+            status=RoomBooking.STATUS_CANCELLED
+        ).exists()
 
 # ─────────────────────────────────────────────────────────────────────
 # EVENT BOOKINGS (HALL)
@@ -520,49 +559,136 @@ class Booking(TimeUserStamps):
 # ─────────────────────────────────────────────────────────────────────
 class RoomBooking(TimeUserStamps):
     """
-    Room Bookings: same pattern as Booking, but for individual Rooms
-    rather than whole Halls (e.g. booking a meeting room separately
-    from — or as an add-on to — a main hall booking).
+    Hotel Room Booking
     """
-    status_choices = (
-        (CONFIRMED, CONFIRMED),
-        (PENDING,   PENDING),
-        (CANCELLED, CANCELLED),
+
+    STATUS_PENDING = "PENDING"
+    STATUS_CONFIRMED = "CONFIRMED"
+    STATUS_CANCELLED = "CANCELLED"
+    STATUS_CHECKED_IN = "CHECKED_IN"
+    STATUS_CHECKED_OUT = "CHECKED_OUT"
+
+    STATUS_CHOICES = (
+        (STATUS_PENDING, "Pending"),
+        (STATUS_CONFIRMED, "Confirmed"),
+        (STATUS_CANCELLED, "Cancelled"),
+        (STATUS_CHECKED_IN, "Checked In"),
+        (STATUS_CHECKED_OUT, "Checked Out"),
     )
 
-    booking_code   = models.CharField(max_length=20, unique=True, null=True, blank=True,
-                                      help_text='Human-readable ID like "RB1001" (auto-generated if blank)')
-    room           = models.ForeignKey('Room',     on_delete=models.CASCADE, related_name='bookings')
-    customer       = models.ForeignKey('Customer', on_delete=models.CASCADE, related_name='room_bookings')
-
-    # Optional link back to the parent hall booking, if this room booking
-    # is an add-on to a larger event (e.g. a green room for a wedding).
-    booking        = models.ForeignKey('Booking', on_delete=models.SET_NULL, null=True, blank=True,
-                                        related_name='room_bookings')
-
-    event_type_en  = models.CharField(max_length=100, help_text='Event type, e.g. "Meeting"')
-    event_type_ar  = models.CharField(max_length=100, null=True, blank=True)
-
-    date           = models.DateField()
-    time_slot      = models.CharField(
-                                max_length=20,
-                                choices=Booking.TIME_SLOT_CHOICES,
-                                default=Booking.TIME_SLOT_MORNING,
-                                help_text='Room time slot: Morning Shift, Afternoon Shift, or Night Shift',
+    booking_code = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='Human-readable ID like "RB1001" (auto-generated if blank)'
     )
-    status         = models.CharField(max_length=20, choices=status_choices, default=PENDING)
-    total          = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+
+    room = models.ForeignKey(
+        "Room",
+        on_delete=models.CASCADE,
+        related_name="bookings"
+    )
+
+    customer = models.ForeignKey(
+        "Customer",
+        on_delete=models.CASCADE,
+        related_name="room_bookings"
+    )
+
+    event_type_en = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    event_type_ar = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    check_in_date = models.DateField()
+
+    check_out_date = models.DateField()
+
+    check_in_time = models.TimeField(
+        default=time(14, 0)
+    )
+
+    check_out_time = models.TimeField(
+        default=time(12, 0)
+    )
+
+    adults = models.PositiveIntegerField(default=1)
+
+    children = models.PositiveIntegerField(default=0)
+
+    nights = models.PositiveIntegerField(
+        default=1,
+        editable=False
+    )
+
+    # Copied automatically from Room
+    price_per_night = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        editable=False,
+        validators=[MinValueValidator(0)]
+    )
+
+    total = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default=STATUS_PENDING
+    )
+
+    remarks = models.TextField(
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        ordering = ["-check_in_date", "-created_at"]
 
     def __str__(self):
-        return f"{self.booking_code} - {self.event_type_en} @ {self.room.name_en}"
+        return f"{self.booking_code} - {self.room.name_en}"
+
+    def clean(self):
+        if self.check_out_date <= self.check_in_date:
+            raise ValidationError(
+                "Check-out date must be after check-in date."
+            )
 
     def save(self, *args, **kwargs):
-        is_new = self._state.adding
-        super().save(*args, **kwargs)
-        if is_new and not self.booking_code:
-            self.booking_code = f"RB{1000 + self.id}"
-            super().save(update_fields=['booking_code'])
+        self.full_clean()
 
+        is_new = self._state.adding
+
+        # Copy room price only when booking is created
+        if is_new:
+            self.price_per_night = self.room.price_per_night
+
+        # Calculate nights
+        self.nights = (
+            self.check_out_date - self.check_in_date
+        ).days
+
+        # Calculate total
+        self.total = self.price_per_night * self.nights
+
+        super().save(*args, **kwargs)
+
+        # Generate booking code
+        if is_new and not self.booking_code:
+            self.booking_code = f"RB{1000 + self.pk}"
+            super().save(update_fields=["booking_code"])
 
 # ─────────────────────────────────────────────────────────────────────
 # ACTIVITY LOG

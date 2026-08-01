@@ -1,11 +1,14 @@
-# from rest_framework import serializers
-# from utils.enums import CANCELLED
-# from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, BookingService, HallAmenity
+from utils.enums import CANCELLED
+from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, BookingService, HallAmenity, Room, RoomBooking
 
 
 # # ─────────────────────────────────────────────────────────────────────
 # # CUSTOMER
 # # ─────────────────────────────────────────────────────────────────────
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = '__all__'
 # class CustomerSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Customer
@@ -568,11 +571,10 @@ class RoomOccupancyMixin:
     def get_upcoming_occupied_dates(self, instance):
         return [
             {
-                'date': b.date,
-                'time_slot': b.time_slot,
-                'time_slot_display': b.get_time_slot_display(),
+                'check_in_date': b.check_in_date,
+                'check_out_date': b.check_out_date,
                 'booking_code': b.booking_code,
-                'event_type_en': b.event_type_en,
+                'status': b.status,
             }
             for b in instance.get_upcoming_bookings(limit=2)
         ]
@@ -611,12 +613,11 @@ class RoomSerializer(RoomOccupancyMixin, serializers.ModelSerializer):
 class RoomListingSerializer(RoomOccupancyMixin, serializers.ModelSerializer):
     occupied = serializers.SerializerMethodField()
     upcoming_occupied_dates = serializers.SerializerMethodField()
-    # hall_name_en = serializers.CharField(source='hall.name_en', read_only=True)
 
     class Meta:
         model = Room
         fields = ['id', 'name_en', 'name_ar', 'code_name', 'capacity', 'capacity_count',
-                  'badge', 'image', 'occupied', 'upcoming_occupied_dates', 'booking_count']
+                  'price_per_night', 'badge', 'image', 'occupied', 'upcoming_occupied_dates', 'booking_count']
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -704,22 +705,33 @@ class RoomBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model  = RoomBooking
         fields = '__all__'
+        read_only_fields = ['nights', 'price_per_night', 'total']
 
     def validate(self, attrs):
-        room      = attrs.get('room')      or (self.instance.room      if self.instance else None)
-        date      = attrs.get('date')      or (self.instance.date      if self.instance else None)
-        time_slot = attrs.get('time_slot') or (self.instance.time_slot if self.instance else None)
+        room = attrs.get('room') or (self.instance.room if self.instance else None)
+        check_in_date = attrs.get('check_in_date') or (self.instance.check_in_date if self.instance else None)
+        check_out_date = attrs.get('check_out_date') or (self.instance.check_out_date if self.instance else None)
 
-        # Prevent double-booking the same room on the same date AND time slot
-        if room and date and time_slot:
+        # Prevent double-booking the same room for overlapping dates
+        if room and check_in_date and check_out_date:
             clashing = RoomBooking.objects.filter(
-                room=room, date=date, time_slot=time_slot, deleted=False
-            ).exclude(status=CANCELLED)
+                room=room,
+                deleted=False
+            ).exclude(status=RoomBooking.STATUS_CANCELLED)
+            
+            # Check for date overlap
             if self.instance:
                 clashing = clashing.exclude(id=self.instance.id)
-            if clashing.exists():
+            
+            # Filter overlapping bookings
+            overlapping = clashing.filter(
+                check_in_date__lt=check_out_date,
+                check_out_date__gt=check_in_date
+            )
+            
+            if overlapping.exists():
                 raise serializers.ValidationError(
-                    'This room is already booked for the selected date and time slot'
+                    'This room is already booked for the selected date range'
                 )
         return attrs
 
@@ -745,7 +757,7 @@ class RoomBookingSerializer(serializers.ModelSerializer):
         data['room_name_en']  = instance.room.name_en          if instance.room       else None
         data['room_name_ar']  = instance.room.name_ar          if instance.room       else None
         data['customer_name'] = instance.customer.name_en      if instance.customer   else None
-        data['booking_code_parent'] = instance.booking.booking_code if instance.booking else None
+        data['status_display'] = instance.get_status_display()
         return data
 
 
@@ -753,6 +765,7 @@ class RoomBookingListingSerializer(serializers.ModelSerializer):
     room_name_en  = serializers.CharField(source='room.name_en',     read_only=True)
     room_name_ar  = serializers.CharField(source='room.name_ar',     read_only=True)
     customer_name = serializers.CharField(source='customer.name_en', read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model  = RoomBooking
@@ -760,10 +773,13 @@ class RoomBookingListingSerializer(serializers.ModelSerializer):
             'id', 'booking_code',
             'room', 'room_name_en', 'room_name_ar',
             'customer', 'customer_name',
-            'booking',
             'event_type_en', 'event_type_ar',
-            'date', 'time_slot',
-            'status', 'total',
+            'check_in_date', 'check_out_date',
+            'check_in_time', 'check_out_time',
+            'adults', 'children', 'nights',
+            'price_per_night', 'total',
+            'status', 'status_display',
+            'remarks', 'created_at',
         ]
 
 

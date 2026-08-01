@@ -15,7 +15,7 @@
 # from utils.permission_enums import *
 
 
-# from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, BookingService, HallAmenity, revenue_report, customer_report
+# from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, BookingService, HallAmenity, Room, RoomBooking, revenue_report, customer_report, room_revenue_report
 # from .serializers import (
 #     CustomerSerializer, CustomerListingSerializer,
 #     HallSerializer, HallListingSerializer,
@@ -627,7 +627,7 @@ class RoomView(BaseView):
                     deleted=False, id=request.query_params.get('id', None)
                 ).first()
                 if instance:
-                    if instance.bookings.filter(deleted=False).exclude(status=CANCELLED).exists():
+                    if instance.bookings.filter(deleted=False).exclude(status=RoomBooking.STATUS_CANCELLED).exists():
                         return Response(create_response(ROOM_HAS_ACTIVE_BOOKINGS), status=status.HTTP_400_BAD_REQUEST)
                     instance.deleted = True
                     instance.updated_by = request.user
@@ -734,7 +734,7 @@ class RoomBookingView(BaseView):
 
                     # refresh room occupancy + counts after soft-delete
                     room.recalculate_booking_count()
-                    if not room.bookings.filter(deleted=False).exclude(status=CANCELLED).exists():
+                    if not room.bookings.filter(deleted=False).exclude(status=RoomBooking.STATUS_CANCELLED).exists():
                         room.occupied = False
                         room.occupied_dates = None
                         room.save(update_fields=['occupied', 'occupied_dates'])
@@ -795,7 +795,7 @@ class DashboardStatsView(APIView):
             upcoming_events = bookings.exclude(status=CANCELLED).order_by('date')[:3]
             upcoming_events_data = BookingListingSerializer(upcoming_events, many=True).data
 
-            upcoming_room_events = room_bookings.exclude(status=CANCELLED).order_by('date')[:3]
+            upcoming_room_events = room_bookings.exclude(status=RoomBooking.STATUS_CANCELLED).order_by('check_in_date')[:3]
             upcoming_room_events_data = RoomBookingListingSerializer(upcoming_room_events, many=True).data
 
             data = {
@@ -862,14 +862,14 @@ class RoomRevenueReportView(APIView):
             end_date = request.query_params.get('date_to')
             rows = room_revenue_report(start_date, end_date)
 
-            data = [{
+            data = [({
                 'booking_code': r['booking_code'],
                 'room_name_en': r['room__name_en'],
                 'customer_name': r['customer__name_en'],
-                'date': r['date'],
+                'date': r['check_in_date'],
                 'status': r['status'],
                 'total': r['total'],
-            } for r in rows]
+            } for r in rows)]
 
             serialized = RoomRevenueReportRowSerializer(data, many=True).data
             total_revenue = sum(r['total'] for r in data)

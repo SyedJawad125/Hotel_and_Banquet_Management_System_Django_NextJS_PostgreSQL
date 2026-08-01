@@ -1,7 +1,6 @@
 # import django_filters as filters
-# from django.db.models import Q
-# from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, BookingService, HallAmenity
-
+from django.db.models import Q
+from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, BookingService, HallAmenity, Room, RoomBooking
 
 # class CustomerFilter(filters.FilterSet):
 #     search = filters.CharFilter(method='filter_search')
@@ -242,18 +241,18 @@ class BookingFilter(filters.FilterSet):
 # ROOM BOOKING
 # ─────────────────────────────────────────────────────────────────────
 class RoomBookingFilter(filters.FilterSet):
-    search    = filters.CharFilter(method='filter_search')
-    status    = filters.CharFilter(field_name='status',    lookup_expr='iexact')
-    time_slot = filters.CharFilter(field_name='time_slot', lookup_expr='iexact')
-    room      = filters.NumberFilter(field_name='room_id')
-    customer  = filters.NumberFilter(field_name='customer_id')
-    booking   = filters.NumberFilter(field_name='booking_id')
-    date_to   = filters.DateFilter(field_name='date', lookup_expr='lte')
-    date_from = filters.DateFilter(field_name='date', lookup_expr='gte')
+    search         = filters.CharFilter(method='filter_search')
+    status         = filters.CharFilter(field_name='status', lookup_expr='iexact')
+    room           = filters.NumberFilter(field_name='room_id')
+    customer       = filters.NumberFilter(field_name='customer_id')
+    check_in_to    = filters.DateFilter(field_name='check_in_date', lookup_expr='lte')
+    check_in_from  = filters.DateFilter(field_name='check_in_date', lookup_expr='gte')
+    check_out_to   = filters.DateFilter(field_name='check_out_date', lookup_expr='lte')
+    check_out_from = filters.DateFilter(field_name='check_out_date', lookup_expr='gte')
 
     class Meta:
         model  = RoomBooking
-        fields = ['status', 'time_slot', 'room', 'customer', 'booking', 'date']
+        fields = ['status', 'room', 'customer', 'check_in_date', 'check_out_date']
 
     def filter_search(self, queryset, name, value):
         return queryset.filter(

@@ -1,14 +1,15 @@
 # from django.urls import path
-# from .views import (
-#     CustomerView, HallView, BookingView, ActivityLogView,
-#     DashboardStatsView, RevenueReportView, CustomerReportView,
-#     PaymentView, HallPricingView, BookingServiceView, HallAmenityView,
-# )
+from .views import (
+    CustomerView, HallView, RoomView, BookingView, RoomBookingView, ActivityLogView,
+    DashboardStatsView, RevenueReportView, RoomRevenueReportView, CustomerReportView,
+    PaymentView, HallPricingView, RoomPricingView, BookingServiceView, HallAmenityView, RoomAmenityView,
+)
 
 # urlpatterns = [
 #     path('v1/customer/', CustomerView.as_view(), name='customer'),
 #     path('v1/hall/', HallView.as_view(), name='hall'),
 #     path('v1/booking/', BookingView.as_view(), name='booking'),
+#     path('v1/room/booking/', RoomBookingView.as_view(), name='room-booking'),
 #     path('v1/activity/log/', ActivityLogView.as_view(), name='activity-log'),
 
 #     path('v1/dashboard-stats/', DashboardStatsView.as_view(), name='dashboard-stats'),
