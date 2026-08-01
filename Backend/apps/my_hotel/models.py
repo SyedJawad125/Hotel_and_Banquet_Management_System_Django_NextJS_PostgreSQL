@@ -306,6 +306,7 @@ from utils.reusable_classes import TimeStamps, TimeUserStamps
 from utils.validators import val_name, val_mobile, val_code_name
 from utils.enums import *
 from django.utils import timezone
+from datetime import time
 
 # ─────────────────────────────────────────────────────────────────────
 # CUSTOMERS

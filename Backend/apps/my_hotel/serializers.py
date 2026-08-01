@@ -5,10 +5,6 @@ from .models import Customer, Hall, Booking, ActivityLog, Payment, HallPricing, 
 # # ─────────────────────────────────────────────────────────────────────
 # # CUSTOMER
 # # ─────────────────────────────────────────────────────────────────────
-class CustomerSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Customer
-        fields = '__all__'
 # class CustomerSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Customer
